@@ -18,6 +18,7 @@ Requirements
 1. PyMuPDF
 2. Python Image Library (PIL)
 3. Numpy
+4. opencv-python
 
 Use `pip install -r requirements.txt` to install the packages.
 

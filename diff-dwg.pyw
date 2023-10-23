@@ -8,6 +8,29 @@ highlighted in blue.
 This script is composed from snippets from online sources:
 Anaglyph Algorithm: https://mail.python.org/pipermail/python-list/2006-May/392738.html
 """
+
+#Check if all Packages are installed
+
+import sys
+import subprocess
+import pkg_resources
+
+required = {'pymupdf','numpy', 'pillow','opencv-python'}
+installed = {pkg.key for pkg in pkg_resources.working_set}
+missing = required - installed
+
+if missing:
+    python = sys.executable
+    subprocess.check_call([python, '-m', 'pip', 'install', *missing], stdout=subprocess.DEVNULL)
+
+
+#After all packages are installed, start importing libraries
+
+
+
+
+
+
 from tkinter import *
 from tkinter import messagebox
 import tkinter.filedialog as tk
@@ -37,6 +60,7 @@ size_check = 0
 
 #Anaglyph matrices
 _magic = [0.299, 0.587, 0.114]
+
 _zero = [0, 0, 0]
 _ident = [[1, 0, 0],
           [0, 1, 0],
@@ -46,9 +70,10 @@ true_anaglyph = ([_magic, _zero, _zero], [_zero, _zero, _magic])
 gray_anaglyph = ([_magic, _zero, _zero], [_zero, _magic, _magic])
 color_anaglyph = ([_ident[0], _zero, _zero], [_zero, _ident[1], _ident[2]])
 color2_anaglyph = ([[1, 0, 0],[0,0,0],[0,0,0.603922]],[[0,0,0],[0,1,0],[0,0,0.396078]])
+color3_anaglyph = ([[1, 0, 0],[0,0,0],[0,0,0.7]],[[0,0,0],[0,1,0],[0,0,0.3]])
 half_color_anaglyph = ([_magic, _zero, _zero], [_zero, _ident[1], _ident[2]])
 optimized_anaglyph = ([[0, 0.7, 0.3], _zero, _zero], [_zero, _ident[1], _ident[2]])
-methods = [true_anaglyph, gray_anaglyph, color_anaglyph, half_color_anaglyph, optimized_anaglyph]
+methods = [true_anaglyph, gray_anaglyph, color_anaglyph, half_color_anaglyph, optimized_anaglyph,color2_anaglyph,color3_anaglyph]
 
 class DiffApp(Frame):
     def __init__(self, master):
@@ -163,8 +188,9 @@ def pdf2png(pdf,temp):
     yres=2
     mat= fitz.Matrix(xres,yres)
     for page in doc:
-        pix = page.getPixmap(matrix=mat, colorspace="rgb", alpha = False)
-        pix.writePNG(png)
+        pix = page.get_pixmap(matrix=mat, colorspace="rgb", alpha = False) #initial colorspace = "rgb"
+        #pix.writePNG(png)
+        pix.save(png, "png")
     return png
 
 def alignimage(align1,align2):
@@ -405,7 +431,7 @@ def process_images():
         align1, align2 = alignimage(img1_file, img2_file)
         im1, im2 = Image.open(align2), Image.open(align1)
     else:
-        im1, im2 = Image.open(img2_file), Image.open(img1_file)
+        im1, im2 = Image.open(img2_file), Image.open(img1_file) ###img1 replaced with img2 and the other way around too
     file_string = os.path.splitext(os.path.basename(filePath1))[0] + "-diff.png"
     if im1.size[0] == im2.size[0] and im1.size[1] == im2.size[1]:
         print("Drawing sizes match")
@@ -415,7 +441,7 @@ def process_images():
         else:
             dispimg = diffdir + "/" + file_string
             waterimg = diffdir + "/" + file_string
-        anaglyph(im1, im2, color2_anaglyph).save(dispimg, quality=90)
+        anaglyph(im1, im2, gray_anaglyph).save(dispimg, quality=90) ###color2_anaglyph
         watermark_text(dispimg,waterimg,"UNCONTROLLED COPY",pos=(0, 0))
     else:
         print("Drawing size mismatch.")
